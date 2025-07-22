@@ -1,0 +1,12 @@
+services:
+
+  wallet:
+    build:
+      context: ../
+    container_name: wallet
+    ports:
+      - "8080:8080"
+    depends_on:
+      - minio
+      - mongo
+    restart: always
