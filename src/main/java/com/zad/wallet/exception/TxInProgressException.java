@@ -1,14 +1,20 @@
 package com.zad.wallet.exception;
 
+import com.zad.wallet.dto.TxOperation;
+import com.zad.wallet.dto.TxStatus;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-import lombok.Getter;
+import java.math.BigDecimal;
+import java.time.Instant;
 
+@Data
+@AllArgsConstructor
 public class TxInProgressException extends RuntimeException {
-    @Getter
     private final String trxId;
+    private final TxOperation operation;
+    private final BigDecimal amount;
+    private final TxStatus status;
+    private final Instant ts;
 
-    public TxInProgressException(String trxId) {
-        this.trxId = trxId;
-    }
 }
-

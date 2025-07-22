@@ -1,7 +1,8 @@
 package com.zad.wallet.controller;
 
 import com.zad.wallet.dto.ErrorResponse;
-import com.zad.wallet.dto.TrxIdResponse;
+import com.zad.wallet.dto.TrxResponse;
+import com.zad.wallet.exception.InsufficientFundsException;
 import com.zad.wallet.exception.TxInProgressException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
+    @ExceptionHandler(InsufficientFundsException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientFunds(InsufficientFundsException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Insufficient Funds",
+                ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     @ExceptionHandler(TxInProgressException.class)
-    public ResponseEntity<TrxIdResponse> handleInProgress(TxInProgressException ex) {
-        return ResponseEntity.ok(new TrxIdResponse(ex.getTrxId()));
+    public ResponseEntity<TrxResponse> handleInProgress(TxInProgressException ex) {
+        return ResponseEntity.ok(new TrxResponse(ex.getTrxId(), ex.getOperation(), ex.getAmount(), ex.getStatus(), ex.getTs()));
     }
 
     @ExceptionHandler(ResponseStatusException.class)
