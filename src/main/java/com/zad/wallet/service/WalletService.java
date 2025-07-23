@@ -3,8 +3,10 @@ package com.zad.wallet.service;
 import com.zad.wallet.dto.TxOperation;
 import com.zad.wallet.dto.TxStatus;
 import com.zad.wallet.exception.InsufficientFundsException;
+import com.zad.wallet.exception.InvalidCurrencyException;
 import com.zad.wallet.exception.TxInProgressException;
 import com.zad.wallet.model.KafkaTxMessage;
+import com.zad.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +25,7 @@ public class WalletService {
 
     private final StringRedisTemplate redis;
     private final KafkaTemplate<String, KafkaTxMessage> kafka;
+    private final WalletRepository walletRepository;
 
     private static final Duration IDEMPOTENCY_TTL = Duration.ofMinutes(1);
 
@@ -30,7 +33,7 @@ public class WalletService {
     private String trxTopic;
 
 
-    public String makeTransaction(String trxKey, String userId, BigDecimal amount, TxOperation operation, Instant ts) {
+    public String makeTransaction(String trxKey, String userId, BigDecimal amount, String currency, TxOperation operation, Instant ts) {
         var redisKey = "idempotency:" + trxKey;
         if (redis.hasKey(redisKey)) {
             var trxId = redis.opsForValue().get(redisKey);
@@ -38,7 +41,7 @@ public class WalletService {
         }
         redis.opsForValue().set(redisKey, trxKey, IDEMPOTENCY_TTL.getSeconds());
         if (operation.equals(TxOperation.WITHDRAW)) {
-            var currentBalance = getBalance(userId);
+            var currentBalance = getBalance(userId, currency);
             if (currentBalance.subtract(amount).compareTo(BigDecimal.ZERO) < 0) {
                 throw new InsufficientFundsException(trxKey, userId);
             }
@@ -60,12 +63,17 @@ public class WalletService {
                         kafkaMessage.getOperation(),
                         ex
                 );
+                throw new RuntimeException("Internal Error");
             }
         });
         return kafkaMessage.getTrxId();
     }
 
-    public BigDecimal getBalance(String userId) {
-        return BigDecimal.ZERO;
+    public BigDecimal getBalance(String userId, String currency) {
+        var curr = currency.toLowerCase();
+        if (!curr.equals("usd") && !curr.equals("try")) {
+            throw new InvalidCurrencyException(curr);
+        }
+        return walletRepository.getUserBalance(userId, curr);
     }
 }

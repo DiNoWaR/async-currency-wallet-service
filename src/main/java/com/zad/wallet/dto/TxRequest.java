@@ -18,4 +18,7 @@ public class TxRequest {
 
     @DecimalMin(value = "0.000001", inclusive = true, message = "Amount must be positive")
     private BigDecimal amount;
+
+    @NotNull
+    private String currency;
 }
