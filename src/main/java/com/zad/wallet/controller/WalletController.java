@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -50,13 +49,8 @@ public class WalletController {
     }
 
 
-    @GetMapping("/status/{trxId}")
+    @GetMapping("/transactions/{trxId}")
     public List<TxStatus> status(@PathVariable String trxId) {
         return null;
-    }
-
-    @GetMapping("/health")
-    public ResponseEntity<?> health() {
-        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
