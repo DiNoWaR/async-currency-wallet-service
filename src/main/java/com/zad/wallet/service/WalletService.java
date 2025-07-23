@@ -51,6 +51,7 @@ public class WalletService {
                 .userId(userId)
                 .amount(amount)
                 .ts(ts)
+                .currency(currency)
                 .status(TxStatus.PENDING)
                 .operation(operation)
                 .build();

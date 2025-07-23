@@ -4,10 +4,8 @@ import com.zad.wallet.dto.TrxResponse;
 import com.zad.wallet.dto.TxOperation;
 import com.zad.wallet.dto.TxRequest;
 import com.zad.wallet.dto.TxStatus;
-import com.zad.wallet.service.RateLimiterService;
 import com.zad.wallet.constants.Constants;
 import com.zad.wallet.service.WalletService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -53,12 +51,17 @@ public class WalletController {
 
 
     @GetMapping("/balance/{userId}")
-    public BigDecimal getBalance(@PathVariable Long userId) {
+    public BigDecimal getBalance(@PathVariable String userId) {
         return null;
     }
 
     @GetMapping("/status/{trxId}")
     public List<TxStatus> status(@PathVariable String trxId) {
         return null;
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<?> health() {
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

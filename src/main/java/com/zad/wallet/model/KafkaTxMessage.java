@@ -18,6 +18,7 @@ public class KafkaTxMessage {
     private String userId;
     private BigDecimal amount;
     private TxOperation operation;
+    private String currency;
     private TxStatus status;
     private Instant ts;
 }

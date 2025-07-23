@@ -18,7 +18,7 @@ create table accounts
     balance  decimal(18, 6) not null
 );
 
-CREATE INDEX idx_accounts_user_id ON accounts (user_id);
+create index idx_accounts_user_id on accounts (user_id);
 
 create table transactions
 (
@@ -31,8 +31,8 @@ create table transactions
     created_at timestamp with time zone default now() not null
 );
 
-CREATE INDEX idx_transactions_status ON transactions (status);
-CREATE INDEX idx_transactions_id ON transactions (id);
+create index idx_transactions_status on transactions (status);
+create index idx_transactions_id on transactions (id);
 
 --rollback drop table users;
 --rollback drop table accounts;
