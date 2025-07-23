@@ -50,11 +50,6 @@ public class WalletController {
     }
 
 
-    @GetMapping("/balance/{userId}")
-    public BigDecimal getBalance(@PathVariable String userId) {
-        return null;
-    }
-
     @GetMapping("/status/{trxId}")
     public List<TxStatus> status(@PathVariable String trxId) {
         return null;

@@ -1,5 +1,6 @@
 package com.zad.wallet.service;
 
+import com.zad.wallet.dto.Balance;
 import com.zad.wallet.dto.TxOperation;
 import com.zad.wallet.dto.TxStatus;
 import com.zad.wallet.exception.InsufficientFundsException;
@@ -17,12 +18,12 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class WalletService {
-
     private final StringRedisTemplate redis;
     private final KafkaTemplate<String, KafkaTxMessage> kafka;
     private final WalletRepository walletRepository;
@@ -41,9 +42,13 @@ public class WalletService {
         }
         redis.opsForValue().set(redisKey, trxKey, IDEMPOTENCY_TTL.getSeconds());
         if (operation.equals(TxOperation.WITHDRAW)) {
-            var currentBalance = getBalance(userId, currency);
-            if (currentBalance.subtract(amount).compareTo(BigDecimal.ZERO) < 0) {
-                throw new InsufficientFundsException(trxKey, userId);
+            var balances = walletRepository.getUserBalances(userId);
+            for (var balance : balances) {
+                if (balance.currency().equals(currency)) {
+                    if (balance.amount().subtract(amount).compareTo(BigDecimal.ZERO) < 0) {
+                        throw new InsufficientFundsException(trxKey, userId);
+                    }
+                }
             }
         }
 
@@ -70,11 +75,12 @@ public class WalletService {
         return kafkaMessage.getTrxId();
     }
 
-    public BigDecimal getBalance(String userId, String currency) {
-        var curr = currency.toLowerCase();
-        if (!curr.equals("usd") && !curr.equals("try")) {
-            throw new InvalidCurrencyException(curr);
+    public List<Balance> getUserBalances(String userId) {
+        try {
+            return walletRepository.getUserBalances(userId);
+        } catch (Exception ex) {
+            log.error("Failed to get user balances for userId={} ", userId, "ex=" + ex);
+            throw ex;
         }
-        return walletRepository.getUserBalance(userId, curr);
     }
 }

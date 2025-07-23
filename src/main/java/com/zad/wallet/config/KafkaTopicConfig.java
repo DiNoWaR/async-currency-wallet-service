@@ -13,7 +13,7 @@ public class KafkaTopicConfig {
     @Value("${kafka.topic.transactions}")
     private String trxTopic;
 
-    @Value("${kafka.topic.transactions.partitions}")
+    @Value("${kafka.topic.transactions.partitions")
     private int topicPartitions;
 
 

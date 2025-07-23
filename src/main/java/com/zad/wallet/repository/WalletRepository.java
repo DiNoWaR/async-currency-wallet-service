@@ -1,5 +1,6 @@
 package com.zad.wallet.repository;
 
+import com.zad.wallet.dto.Balance;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -20,14 +21,6 @@ public class WalletRepository {
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
 
-    public BigDecimal getUserBalance(String userId, String currency) {
-        List<BigDecimal> list = jdbc.query(
-                "select balance from wallets where user_id = ? and currency = ?",
-                (rs, rowNum) -> rs.getBigDecimal("balance"), userId, currency
-        );
-        return list.isEmpty() ? BigDecimal.ZERO : list.get(0);
-    }
-
     public String createUserWithEmptyWallets(String name, String hashedPassword) {
         return tx.execute(status -> {
             var userId = UUID.randomUUID();
@@ -39,6 +32,14 @@ public class WalletRepository {
 
             return userId.toString();
         });
+    }
+
+    public List<Balance> getUserBalances(String userId) {
+        return jdbc.query("select currency, balance from accounts where user_id = ?", (rs, rowNum) -> new Balance(
+                        rs.getBigDecimal("balance"),
+                        rs.getString("currency")),
+                userId
+        );
     }
 
     public void persistTransaction(String trxId, String userId, String type, String currency, BigDecimal amount, String status, Instant createdAt) {
