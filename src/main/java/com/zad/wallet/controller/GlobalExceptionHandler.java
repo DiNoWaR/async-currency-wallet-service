@@ -3,6 +3,7 @@ package com.zad.wallet.controller;
 import com.zad.wallet.dto.ErrorResponse;
 import com.zad.wallet.dto.TrxResponse;
 import com.zad.wallet.exception.InsufficientFundsException;
+import com.zad.wallet.exception.InvalidCurrencyException;
 import com.zad.wallet.exception.TxInProgressException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +52,14 @@ public class GlobalExceptionHandler {
                     .body(error);
         }
         throw exception;
+    }
+
+    @ExceptionHandler(InvalidCurrencyException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCurrency(InvalidCurrencyException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(), "Invalid currency", ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }
 

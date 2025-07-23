@@ -7,7 +7,7 @@ create table users
 (
     id              uuid primary key default gen_random_uuid(),
     name            text not null,
-    hashed_password text not null,
+    hashed_password text not null
 );
 
 create table accounts
@@ -30,6 +30,9 @@ create table transactions
     status     varchar(20)                            not null,
     created_at timestamp with time zone default now() not null
 );
+
+CREATE INDEX idx_transactions_status ON transactions (status);
+CREATE INDEX idx_transactions_id ON transactions (id);
 
 --rollback drop table users;
 --rollback drop table accounts;
