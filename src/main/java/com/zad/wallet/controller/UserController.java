@@ -9,19 +9,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
     private final WalletService walletService;
 
     @PostMapping("")
     public ResponseEntity<LoginUserResponse> logUser(@RequestBody LogUserRequest request) {
-        var response = new LoginUserResponse("", "", "");
+        var response = walletService.logUser(request.getUsername());
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/balances/{userId}")
-    public ResponseEntity<BalanceResponse> getUserBalance(@PathVariable String userId) {
+    @GetMapping("/balances")
+    public ResponseEntity<BalanceResponse> getUserBalance(@RequestAttribute("userId") String userId) {
         var balances = walletService.getUserBalances(userId);
         var response = new BalanceResponse(userId, balances);
         return ResponseEntity.ok(response);

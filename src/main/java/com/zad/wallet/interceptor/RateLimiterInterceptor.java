@@ -17,8 +17,7 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
     private final RateLimiterService rateLimiter;
 
     @Override
-    public boolean preHandle(HttpServletRequest request,
-                             HttpServletResponse response, Object handler) throws IOException {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
 
         var ip = extractClientIp(request);
         try {
@@ -42,5 +41,4 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
         }
         return request.getRemoteAddr();
     }
-
 }

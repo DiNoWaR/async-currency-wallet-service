@@ -1,6 +1,9 @@
 package com.zad.wallet.repository;
 
 import com.zad.wallet.dto.Balance;
+import com.zad.wallet.dto.TrxResponse;
+import com.zad.wallet.dto.TxOperation;
+import com.zad.wallet.dto.TxStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -15,40 +18,46 @@ import java.util.UUID;
 @Repository
 @RequiredArgsConstructor
 public class WalletRepository {
-    private record PendingTx(String id, String userId, String currency, String type, BigDecimal amount) {
+    private record PendingTx(UUID id, UUID userId, String currency, String type, BigDecimal amount) {
     }
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
 
-    public String createUserWithEmptyWallets(String name, String hashedPassword) {
+    public String createUserWithEmptyWallets(String name) {
         return tx.execute(status -> {
+            var count = jdbc.queryForObject("select count(*) from users where name = ?", Integer.class, name);
+            if (count != null && count > 0) {
+                return jdbc.queryForObject("select id from users where name = ?", String.class, name);
+            }
             var userId = UUID.randomUUID();
-            jdbc.update("insert into users (id, name, hashed_password) values (?, ?, ?)", userId, name, hashedPassword);
-
+            jdbc.update("insert into users (id, name) values (?, ?)", userId, name);
             jdbc.update("insert into accounts (id, user_id, currency, balance) values (?, ?, ?, ?)", UUID.randomUUID(), userId, "try", BigDecimal.ZERO);
-
             jdbc.update("insert into accounts (id, user_id, currency, balance) values (?, ?, ?, ?)", UUID.randomUUID(), userId, "usd", BigDecimal.ZERO);
-
             return userId.toString();
         });
     }
 
-    public List<Balance> getUserBalances(String userId) {
-        return jdbc.query("select currency, balance from accounts where user_id = ?", (rs, rowNum) -> new Balance(
+    public List<Balance> getUserBalances(String userIdStr) {
+        var userId = UUID.fromString(userIdStr);
+        return jdbc.query(
+                "SELECT currency, balance FROM accounts WHERE user_id = ?",
+                new Object[]{userId},
+                (rs, rowNum) -> new Balance(
                         rs.getBigDecimal("balance"),
-                        rs.getString("currency")),
-                userId
+                        rs.getString("currency")
+                )
         );
     }
 
-    public void persistTransaction(String trxId, String userId, String type, String currency, BigDecimal amount, String status, Instant createdAt) {
+    public void persistTransaction(String trxIdStr, String userIdStr, String type, String currency, BigDecimal amount, String status, Instant createdAt) {
         var query = """
                 insert into transactions
                 (id, user_id, type, currency, amount, status, created_at)
                 values (?, ?, ?, ?, ?, ?, ?)
                 """;
-
+        var userId = UUID.fromString(userIdStr);
+        var trxId = UUID.fromString(trxIdStr);
         jdbc.update(query,
                 trxId,
                 userId,
@@ -65,8 +74,8 @@ public class WalletRepository {
             List<PendingTx> pending = jdbc.query(
                     "select id, user_id, currency, type, amount from transactions where status = 'pending' for update skip locked",
                     (rs, rn) -> new PendingTx(
-                            rs.getString("id"),
-                            rs.getString("user_id"),
+                            rs.getObject("id", java.util.UUID.class),
+                            rs.getObject("user_id", java.util.UUID.class),
                             rs.getString("currency"),
                             rs.getString("type"),
                             rs.getBigDecimal("amount")
@@ -85,5 +94,25 @@ public class WalletRepository {
                 jdbc.update("update transactions set status = 'success' where id = ?", txn.id);
             }
         });
+    }
+
+    public TrxResponse getTransaction(String trxIdStr) {
+        var query = """
+                    SELECT id, type, amount, status, created_at
+                    FROM transactions
+                    WHERE id = ?
+                """;
+        var trxId = UUID.fromString(trxIdStr);
+        return jdbc.queryForObject(
+                query,
+                (rs, rn) -> new TrxResponse(
+                        rs.getObject("id", java.util.UUID.class).toString(),
+                        TxOperation.valueOf(rs.getString("type")),
+                        rs.getBigDecimal("amount"),
+                        TxStatus.valueOf(rs.getString("status")),
+                        rs.getTimestamp("created_at").toInstant()
+                ),
+                trxId
+        );
     }
 }

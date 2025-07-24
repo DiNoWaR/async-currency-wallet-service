@@ -1,11 +1,6 @@
 package com.zad.wallet.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.zad.wallet.dto.Balance;
-import com.zad.wallet.dto.LoginUserResponse;
-import com.zad.wallet.dto.TxOperation;
-import com.zad.wallet.dto.TxStatus;
+import com.zad.wallet.dto.*;
 import com.zad.wallet.exception.InsufficientFundsException;
 import com.zad.wallet.exception.TxInProgressException;
 import com.zad.wallet.model.KafkaTxMessage;
@@ -15,14 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -32,25 +24,24 @@ public class WalletService {
     private final StringRedisTemplate redis;
     private final KafkaTemplate<String, KafkaTxMessage> kafka;
     private final WalletRepository walletRepository;
-
-    private PasswordEncoder encoder;
+    private final JwtService jwtService;
 
     private static final Duration IDEMPOTENCY_TTL = Duration.ofMinutes(1);
 
     @Value("${kafka.topic.transactions}")
     private String trxTopic;
 
-    @Value("${jwt.secret.key}")
-    private String secret;
-
 
     public String makeTransaction(String trxKey, String userId, BigDecimal amount, String currency, TxOperation operation, Instant ts) {
-        var redisKey = "idempotency:" + trxKey;
-        if (redis.hasKey(redisKey)) {
-            var trxId = redis.opsForValue().get(redisKey);
-            throw new TxInProgressException(trxId, operation, amount, TxStatus.PENDING, ts);
+        if (!trxKey.isEmpty()) {
+            var redisKey = "idempotency:" + trxKey;
+            if (redis.hasKey(redisKey)) {
+                var trxId = redis.opsForValue().get(redisKey);
+                throw new TxInProgressException(trxId, operation, amount, TxStatus.PENDING, ts);
+            }
+            redis.opsForValue().set(redisKey, trxKey, IDEMPOTENCY_TTL.getSeconds());
         }
-        redis.opsForValue().set(redisKey, trxKey, IDEMPOTENCY_TTL.getSeconds());
+
         if (operation.equals(TxOperation.WITHDRAW)) {
             var balances = walletRepository.getUserBalances(userId);
             for (var balance : balances) {
@@ -87,21 +78,32 @@ public class WalletService {
 
     public List<Balance> getUserBalances(String userId) {
         try {
+            log.info("userId: {}", userId);
             return walletRepository.getUserBalances(userId);
         } catch (Exception ex) {
-            log.error("Failed to get user balances for userId={} ", userId, "ex=" + ex);
+            log.error("Failed to get user balances for userId={}, error={}", userId, ex);
             throw ex;
         }
     }
 
-    public LoginUserResponse logUser(String username, String password){
-        var userId = walletRepository.createUserWithEmptyWallets(username, encoder.encode(password));
-        var alg = Algorithm.HMAC256(secret);
-        var token = JWT.create()
-                .withSubject(userId)
-                .withIssuedAt(new Date())
-                .withExpiresAt(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                .sign(alg);
-        return new LoginUserResponse(userId, username, token);
+    public LoginUserResponse logUser(String username) {
+        try {
+            var userId = walletRepository.createUserWithEmptyWallets(username);
+            var token = jwtService.generateToken(userId);
+            return new LoginUserResponse(userId, username, token);
+        } catch (Exception ex) {
+            log.error("Failed to create user with name={}, error={}", username, ex);
+            throw ex;
+        }
+    }
+
+    public TrxResponse getTransaction(String trxId) {
+        try {
+            var trx = walletRepository.getTransaction(trxId);
+            return trx;
+        } catch (Exception ex) {
+            log.error("Failed to get transaction for trxId={}", trxId);
+            throw ex;
+        }
     }
 }

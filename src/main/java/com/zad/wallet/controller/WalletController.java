@@ -23,11 +23,12 @@ public class WalletController {
 
     @PostMapping("/transactions/deposit")
     public ResponseEntity<?> deposit(
-            @RequestHeader(value = Constants.IDEMPOTENCY_KEY_HEADER, required = false) String trxKey,
+            @RequestAttribute("userId") String userId,
+            @RequestHeader(value = Constants.IDEMPOTENCY_KEY_HEADER, required = false, defaultValue = "") String trxKey,
             @Valid @RequestBody TxRequest request) {
 
         var now = Instant.now();
-        var trxId = walletService.makeTransaction(trxKey, request.getUserId(), request.getAmount(), request.getCurrency(), TxOperation.DEPOSIT, now);
+        var trxId = walletService.makeTransaction(trxKey, userId, request.getAmount(), request.getCurrency(), TxOperation.DEPOSIT, now);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new TrxResponse(trxId, TxOperation.DEPOSIT, request.getAmount(), TxStatus.PENDING, now));
@@ -37,20 +38,21 @@ public class WalletController {
 
     @PostMapping("/transactions/withdraw")
     public ResponseEntity<?> withdraw(
-            @RequestHeader(value = Constants.IDEMPOTENCY_KEY_HEADER, required = false) String trxKey,
+            @RequestAttribute("userId") String userId,
+            @RequestHeader(value = Constants.IDEMPOTENCY_KEY_HEADER, required = false, defaultValue = "") String trxKey,
             @Valid @RequestBody TxRequest request) {
 
         var now = Instant.now();
-        var trxId = walletService.makeTransaction(trxKey, request.getUserId(), request.getAmount(), request.getCurrency(), TxOperation.WITHDRAW, now);
+        var trxId = walletService.makeTransaction(trxKey, userId, request.getAmount(), request.getCurrency(), TxOperation.WITHDRAW, now);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new TrxResponse(trxId, TxOperation.WITHDRAW, request.getAmount(), TxStatus.PENDING, now));
-
     }
 
 
     @GetMapping("/transactions/{trxId}")
-    public List<TxStatus> status(@PathVariable String trxId) {
-        return null;
+    public ResponseEntity<TrxResponse> status(@PathVariable String trxId) {
+        var response = walletService.getTransaction(trxId);
+        return ResponseEntity.ok().body(response);
     }
 }

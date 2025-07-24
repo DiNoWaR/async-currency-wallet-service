@@ -1,5 +1,6 @@
 package com.zad.wallet.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -14,11 +15,11 @@ import java.math.BigDecimal;
 public class TxRequest {
 
     @NotNull
-    private String userId;
-
     @DecimalMin(value = "0.000001", inclusive = true, message = "Amount must be positive")
+    @JsonProperty("amount")
     private BigDecimal amount;
 
     @NotNull
+    @JsonProperty("currency")
     private String currency;
 }

@@ -1,13 +1,12 @@
 --liquibase formatted sql
 
---changeset denis_vasilev:001-create-users
+--changeset denis_vasilev:001-create-main-tables
 create extension if not exists pgcrypto;
 
 create table users
 (
     id              uuid primary key default gen_random_uuid(),
-    name            text not null unique,
-    hashed_password text not null
+    name            text not null unique
 );
 
 create table accounts

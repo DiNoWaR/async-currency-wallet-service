@@ -4,6 +4,7 @@ import com.zad.wallet.dto.TxOperation;
 import com.zad.wallet.dto.TxStatus;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @Data
 @Builder
+@Jacksonized
 public class KafkaTxMessage {
     @Builder.Default
     private final String trxId = UUID.randomUUID().toString();

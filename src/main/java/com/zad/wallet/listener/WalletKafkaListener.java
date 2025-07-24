@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class WalletKafkaListener {
-
     private final WalletRepository walletRepository;
 
     @KafkaListener(
