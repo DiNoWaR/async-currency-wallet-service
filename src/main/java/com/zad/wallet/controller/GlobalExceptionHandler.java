@@ -1,7 +1,6 @@
 package com.zad.wallet.controller;
 
 import com.zad.wallet.dto.ErrorResponse;
-import com.zad.wallet.dto.TrxResponse;
 import com.zad.wallet.exception.InsufficientFundsException;
 import com.zad.wallet.exception.InvalidCurrencyException;
 import com.zad.wallet.exception.TxInProgressException;
@@ -34,8 +33,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TxInProgressException.class)
-    public ResponseEntity<TrxResponse> handleInProgress(TxInProgressException ex) {
-        return ResponseEntity.ok(new TrxResponse(ex.getTrxId(), ex.getOperation(), ex.getAmount(), ex.getStatus(), ex.getTs()));
+    public ResponseEntity<ErrorResponse> handleInProgress(TxInProgressException ex) {
+        var resp = new ErrorResponse(HttpStatus.CONFLICT.value(), "Transaction submitted, idempotency key:", ex.getTrxKey());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(resp);
     }
 
     @ExceptionHandler(ResponseStatusException.class)

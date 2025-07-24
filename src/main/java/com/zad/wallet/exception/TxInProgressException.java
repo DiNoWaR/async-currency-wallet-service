@@ -11,10 +11,11 @@ import java.time.Instant;
 @Data
 @AllArgsConstructor
 public class TxInProgressException extends RuntimeException {
-    private final String trxId;
+    private final String trxKey;
     private final TxOperation operation;
     private final BigDecimal amount;
     private final TxStatus status;
+    private final String currency;
     private final Instant ts;
 
 }

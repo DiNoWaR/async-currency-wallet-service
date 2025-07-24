@@ -19,12 +19,5 @@ public class UserController {
         var response = walletService.logUser(request.getUsername());
         return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/balances")
-    public ResponseEntity<BalanceResponse> getUserBalance(@RequestAttribute("userId") String userId) {
-        var balances = walletService.getUserBalances(userId);
-        var response = new BalanceResponse(userId, balances);
-        return ResponseEntity.ok(response);
-    }
 }
 

@@ -8,5 +8,6 @@ public record TrxResponse(
         TxOperation operation,
         BigDecimal amount,
         TxStatus status,
+        String currency,
         Instant ts) {
 }

@@ -18,8 +18,7 @@ import java.util.UUID;
 @Repository
 @RequiredArgsConstructor
 public class WalletRepository {
-    private record PendingTx(UUID id, UUID userId, String currency, String type, BigDecimal amount) {
-    }
+    private record PendingTx(UUID id, UUID userId, String currency, String type, BigDecimal amount) { }
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
@@ -98,7 +97,7 @@ public class WalletRepository {
 
     public TrxResponse getTransaction(String trxIdStr) {
         var query = """
-                    SELECT id, type, amount, status, created_at
+                    SELECT id, type, amount, status, currency, created_at
                     FROM transactions
                     WHERE id = ?
                 """;
@@ -107,9 +106,10 @@ public class WalletRepository {
                 query,
                 (rs, rn) -> new TrxResponse(
                         rs.getObject("id", java.util.UUID.class).toString(),
-                        TxOperation.valueOf(rs.getString("type")),
+                        TxOperation.valueOf(rs.getString("type").toUpperCase()),
                         rs.getBigDecimal("amount"),
-                        TxStatus.valueOf(rs.getString("status")),
+                        TxStatus.valueOf(rs.getString("status").toUpperCase()),
+                        rs.getString("currency"),
                         rs.getTimestamp("created_at").toInstant()
                 ),
                 trxId

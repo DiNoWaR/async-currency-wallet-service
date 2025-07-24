@@ -36,10 +36,9 @@ public class WalletService {
         if (!trxKey.isEmpty()) {
             var redisKey = "idempotency:" + trxKey;
             if (redis.hasKey(redisKey)) {
-                var trxId = redis.opsForValue().get(redisKey);
-                throw new TxInProgressException(trxId, operation, amount, TxStatus.PENDING, ts);
+                throw new TxInProgressException(trxKey, operation, amount, TxStatus.PENDING, currency, ts);
             }
-            redis.opsForValue().set(redisKey, trxKey, IDEMPOTENCY_TTL.getSeconds());
+            redis.opsForValue().set(redisKey, "", IDEMPOTENCY_TTL.getSeconds());
         }
 
         if (operation.equals(TxOperation.WITHDRAW)) {
