@@ -1,0 +1,291 @@
+openapi: 3.1.0
+info:
+  title: Wallet API
+  description: API for Async Wallet Service
+  contact:
+    name: Denis Vasilev
+    email: dinowar1@gmail.com
+  version: "1.0"
+servers:
+- url: http://localhost:8081
+  description: Generated server url
+paths:
+  /users:
+    post:
+      tags:
+      - Authentication
+      summary: Authenticate user by username
+      operationId: logUser
+      requestBody:
+        description: User login request
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogUserRequest"
+        required: true
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LoginUserResponse"
+        "400":
+          description: Invalid request payload
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+  /transactions/withdraw:
+    post:
+      tags:
+      - Transactions
+      summary: Withdraw funds from user's wallet
+      operationId: withdraw
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: ""
+      - name: Authorization
+        in: header
+        description: Bearer token
+        required: true
+        example: Bearer eyJhbGciOi...
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TxRequest"
+        required: true
+      responses:
+        "201":
+          description: Withdrawal initiated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TrxResponse"
+        "400":
+          description: Invalid request parameters
+        "401":
+          description: Unauthorized – missing or invalid Authorization header
+        "409":
+          description: Idempotency conflict – transaction already exists
+        "500":
+          description: Internal server error
+      security:
+      - bearerAuth: []
+  /transactions/deposit:
+    post:
+      tags:
+      - Transactions
+      summary: Deposit funds into user wallet
+      operationId: deposit
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+          default: ""
+      - name: Authorization
+        in: header
+        description: Bearer token
+        required: true
+        example: Bearer eyJhbGciOi...
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TxRequest"
+        required: true
+      responses:
+        "201":
+          description: Deposit transaction created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrxResponse"
+        "400":
+          description: Invalid request payload
+        "401":
+          description: Unauthorized - missing or invalid Authorization header
+        "500":
+          description: Internal server error
+        "409":
+          description: Idempotency conflict – transaction already exists
+      security:
+      - bearerAuth: []
+  /transactions/status/{userId}:
+    get:
+      tags:
+      - Transactions
+      summary: Get last transaction status for user
+      operationId: status
+      parameters:
+      - name: userId
+        in: path
+        description: ID of the user
+        required: true
+        schema:
+          type: string
+        example: 12345
+      responses:
+        "200":
+          description: Successfully retrieved last transaction status
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TrxResponse"
+        "500":
+          description: Internal server error
+  /transactions/exchange:
+    get:
+      tags:
+      - Exchange Rates
+      summary: Get exchange rate between two currencies
+      operationId: getExchangeRates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExchangeRateRequest"
+        required: true
+      responses:
+        "200":
+          description: Exchange rate retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExchangeRateResponse"
+        "400":
+          description: Invalid request parameters
+        "404":
+          description: Exchange rate not found
+        "500":
+          description: Internal server error
+  /transactions/balance/{userId}:
+    get:
+      tags:
+      - Balances
+      summary: Get user wallet balance
+      operationId: getUserBalance
+      parameters:
+      - name: userId
+        in: path
+        description: ID of the user
+        required: true
+        schema:
+          type: string
+        example: 12345
+      responses:
+        "200":
+          description: Successfully retrieved user balances
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BalanceResponse"
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+  /health:
+    get:
+      tags:
+      - Health
+      summary: Health check endpoint
+      operationId: health
+      responses:
+        "200":
+          description: Service is up and running
+components:
+  schemas:
+    LogUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+      required:
+      - username
+    LoginUserResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+        username:
+          type: string
+        accessToken:
+          type: string
+    TxRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+          minimum: 0.000001
+        currency:
+          type: string
+      required:
+      - amount
+      - currency
+    TrxResponse:
+      type: object
+      properties:
+        trxId:
+          type: string
+        operation:
+          type: string
+          enum:
+          - DEPOSIT
+          - WITHDRAW
+          - UNKNOWN
+        amount:
+          type: number
+        status:
+          type: string
+          enum:
+          - SUCCESS
+          - FAIL
+          - PENDING
+          - UNKNOWN
+        currency:
+          type: string
+        ts:
+          type: string
+          format: date-time
+    ExchangeRateRequest:
+      type: object
+      properties:
+        currency_from:
+          type: string
+        currency_to:
+          type: string
+      required:
+      - currency_from
+      - currency_to
+    ExchangeRateResponse:
+      type: object
+      properties:
+        currency_from:
+          type: string
+        currency_to:
+          type: string
+        rate:
+          type: number
+    Balance:
+      type: object
+      properties:
+        amount:
+          type: number
+        currency:
+          type: string
+    BalanceResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+        balances:
+          type: array
+          items:
+            $ref: "#/components/schemas/Balance"
