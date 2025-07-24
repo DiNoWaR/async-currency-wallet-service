@@ -4,4 +4,5 @@ public enum TxStatus {
     SUCCESS,
     FAIL,
     PENDING,
+    UNKNOWN,
 }

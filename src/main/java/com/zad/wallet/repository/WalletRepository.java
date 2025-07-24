@@ -5,6 +5,7 @@ import com.zad.wallet.dto.TrxResponse;
 import com.zad.wallet.dto.TxOperation;
 import com.zad.wallet.dto.TxStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -18,7 +19,8 @@ import java.util.UUID;
 @Repository
 @RequiredArgsConstructor
 public class WalletRepository {
-    private record PendingTx(UUID id, UUID userId, String currency, String type, BigDecimal amount) { }
+    private record PendingTx(UUID id, UUID userId, String currency, String type, BigDecimal amount) {
+    }
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
@@ -95,24 +97,29 @@ public class WalletRepository {
         });
     }
 
-    public TrxResponse getTransaction(String trxIdStr) {
+    public TrxResponse getLastTransaction(String userIdStr) {
         var query = """
                     SELECT id, type, amount, status, currency, created_at
                     FROM transactions
-                    WHERE id = ?
+                    WHERE user_id = ?
+                    ORDER BY created_at DESC LIMIT 1
                 """;
-        var trxId = UUID.fromString(trxIdStr);
-        return jdbc.queryForObject(
-                query,
-                (rs, rn) -> new TrxResponse(
-                        rs.getObject("id", java.util.UUID.class).toString(),
-                        TxOperation.valueOf(rs.getString("type").toUpperCase()),
-                        rs.getBigDecimal("amount"),
-                        TxStatus.valueOf(rs.getString("status").toUpperCase()),
-                        rs.getString("currency"),
-                        rs.getTimestamp("created_at").toInstant()
-                ),
-                trxId
-        );
+        try {
+            var userId = UUID.fromString(userIdStr);
+            return jdbc.queryForObject(
+                    query,
+                    (rs, rn) -> new TrxResponse(
+                            rs.getObject("id", UUID.class).toString(),
+                            TxOperation.valueOf(rs.getString("type").toUpperCase()),
+                            rs.getBigDecimal("amount"),
+                            TxStatus.valueOf(rs.getString("status").toUpperCase()),
+                            rs.getString("currency"),
+                            rs.getTimestamp("created_at").toInstant()
+                    ),
+                    userId
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
     }
 }

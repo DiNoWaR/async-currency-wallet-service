@@ -58,9 +58,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCurrencyException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCurrency(InvalidCurrencyException ex) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(), "Invalid currency", ex.getMessage()
-        );
+        var error = new ErrorResponse(HttpStatus.CONFLICT.value(), "Unsupported currency", ex.getCurrency());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }

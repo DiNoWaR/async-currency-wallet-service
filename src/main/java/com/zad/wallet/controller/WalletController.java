@@ -46,9 +46,9 @@ public class WalletController {
     }
 
 
-    @GetMapping("/status/{trxId}")
-    public ResponseEntity<TrxResponse> status(@PathVariable String trxId) {
-        var response = walletService.getTransaction(trxId);
+    @GetMapping("/status/{userId}")
+    public ResponseEntity<TrxResponse> status(@PathVariable String userId) {
+        var response = walletService.getLastTransaction(userId);
         return ResponseEntity.ok().body(response);
     }
 

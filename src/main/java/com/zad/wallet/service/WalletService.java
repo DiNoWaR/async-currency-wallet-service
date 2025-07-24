@@ -1,7 +1,9 @@
 package com.zad.wallet.service;
 
+import com.zad.wallet.constants.Constants;
 import com.zad.wallet.dto.*;
 import com.zad.wallet.exception.InsufficientFundsException;
+import com.zad.wallet.exception.InvalidCurrencyException;
 import com.zad.wallet.exception.TxInProgressException;
 import com.zad.wallet.model.KafkaTxMessage;
 import com.zad.wallet.repository.WalletRepository;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -40,6 +43,11 @@ public class WalletService {
             }
             redis.opsForValue().set(redisKey, "", IDEMPOTENCY_TTL.getSeconds());
         }
+
+        Optional.ofNullable(redis.opsForSet().members(Constants.CURRENCIES_REDIS_KEY))
+                .filter(set -> set.contains(currency))
+                .orElseThrow(() -> new InvalidCurrencyException(currency));
+
 
         if (operation.equals(TxOperation.WITHDRAW)) {
             var balances = walletRepository.getUserBalances(userId);
@@ -96,12 +104,15 @@ public class WalletService {
         }
     }
 
-    public TrxResponse getTransaction(String trxId) {
+    public TrxResponse getLastTransaction(String userId) {
         try {
-            var trx = walletRepository.getTransaction(trxId);
-            return trx;
+            var lastTrx = walletRepository.getLastTransaction(userId);
+            if (lastTrx == null) {
+                return new TrxResponse("", TxOperation.UNKNOWN, BigDecimal.ZERO, TxStatus.UNKNOWN, "", Instant.now());
+            }
+            return lastTrx;
         } catch (Exception ex) {
-            log.error("Failed to get transaction for trxId={}", trxId);
+            log.error("Failed to get last transaction for userId={}", userId);
             throw ex;
         }
     }
