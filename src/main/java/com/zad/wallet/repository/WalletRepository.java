@@ -113,7 +113,7 @@ public class WalletRepository {
                             TxOperation.valueOf(rs.getString("type").toUpperCase()),
                             rs.getBigDecimal("amount"),
                             TxStatus.valueOf(rs.getString("status").toUpperCase()),
-                            rs.getString("currency"),
+                            rs.getString("currency").toUpperCase(),
                             rs.getTimestamp("created_at").toInstant()
                     ),
                     userId

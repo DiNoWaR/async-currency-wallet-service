@@ -4,6 +4,7 @@ import com.zad.wallet.dto.ErrorResponse;
 import com.zad.wallet.exception.InsufficientFundsException;
 import com.zad.wallet.exception.InvalidCurrencyException;
 import com.zad.wallet.exception.TxInProgressException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -60,6 +61,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidCurrency(InvalidCurrencyException ex) {
         var error = new ErrorResponse(HttpStatus.CONFLICT.value(), "Unsupported currency", ex.getCurrency());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCurrency(EntityNotFoundException ex) {
+        var error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Resource not found", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 }
 

@@ -7,6 +7,7 @@ import com.zad.wallet.exception.InvalidCurrencyException;
 import com.zad.wallet.exception.TxInProgressException;
 import com.zad.wallet.model.KafkaTxMessage;
 import com.zad.wallet.repository.WalletRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,6 +115,19 @@ public class WalletService {
         } catch (Exception ex) {
             log.error("Failed to get last transaction for userId={}", userId);
             throw ex;
+        }
+    }
+
+    public BigDecimal getExchangeRates(String from, String to) {
+        var key = "exchange_rate:" + from + "_" + to;
+        var rate = redis.opsForValue().get(key);
+        if (rate == null) {
+            throw new EntityNotFoundException("Exchange rate not found for " + from + "->" + to);
+        }
+        try {
+            return new BigDecimal(rate.trim());
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid format in redis for key: " + key, e);
         }
     }
 }

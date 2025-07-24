@@ -14,7 +14,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor)
-                .addPathPatterns("/transactions/**")
-                .excludePathPatterns("/transactions/status/**", "/health");
+                .addPathPatterns("/transactions/withdraw/**", "/transactions/deposit/**")
+                .excludePathPatterns("/transactions/status/**", "/transactions/balance/**", "/transactions/exchange/**", "/health");
     }
 }

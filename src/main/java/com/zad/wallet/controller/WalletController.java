@@ -53,17 +53,21 @@ public class WalletController {
     }
 
 
-    @GetMapping("/balance")
-    public ResponseEntity<BalanceResponse> getUserBalance(@RequestAttribute("userId") String userId) {
+    @GetMapping("/balance/{userId}")
+    public ResponseEntity<BalanceResponse> getUserBalance(@PathVariable String userId) {
         var balances = walletService.getUserBalances(userId);
         var response = new BalanceResponse(userId, balances);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/exchange")
-    public ResponseEntity<BalanceResponse> exchange(@RequestAttribute("userId") String userId) {
-        var balances = walletService.getUserBalances(userId);
-        var response = new BalanceResponse(userId, balances);
+    public ResponseEntity<ExchangeRateResponse> getExchangeRates(@Valid @RequestBody ExchangeRateRequest request) {
+        var rate = walletService.getExchangeRates(request.getCurrencyFrom().toLowerCase(), request.getCurrencyTo().toLowerCase());
+        var response = new ExchangeRateResponse(
+                request.getCurrencyFrom().toUpperCase(),
+                request.getCurrencyTo().toUpperCase(),
+                rate
+        );
         return ResponseEntity.ok(response);
     }
 }
