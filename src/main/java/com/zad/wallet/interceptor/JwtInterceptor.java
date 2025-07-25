@@ -10,9 +10,12 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 
 @Component
-@AllArgsConstructor
 public class JwtInterceptor implements HandlerInterceptor {
     private final JwtService jwtService;
+
+    public JwtInterceptor(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
