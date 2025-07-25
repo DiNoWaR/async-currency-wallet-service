@@ -102,6 +102,16 @@ curl -X GET http://localhost:8081/transactions/balance/user1
 ```
 {
   "userId": "user1",
+  "balances" : [
+   { 
+    "currency": USD,
+    "amount": 100
+   },
+   { 
+    "currency": TRY,
+    "amount": 10
+   }
+  ]
   "balances": {
     "usd": 150.00,
     "try": 80.50
@@ -116,15 +126,25 @@ curl -X GET http://localhost:8081/transactions/balance/user1
 curl -X GET http://localhost:8081/transactions/exchange \
   -H "Content-Type: application/json" \
   -d '{
-    "currencyFrom": "usd",
-    "currencyTo": "eur"
+    "currency_from": "USD",
+    "currency_to": "TRY"
 }'
 ```
 - Response
 ```
 {
-  "from": "USD",
-  "to": "TRY",
+  "currency_from": "USD",
+  "currency_to": "TRY",
   "rate": 0.85
 }
+```
+
+🔹 **Transaction Status**
+```
+curl -X GET http://localhost:8081/transactions/status/1234
+```
+- Response
+
+```
+
 ```
