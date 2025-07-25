@@ -146,5 +146,12 @@ curl -X GET http://localhost:8081/transactions/status/1234
 - Response
 
 ```
-
+{
+  "trxId": "abc123",
+  "operation": "DEPOSIT",
+  "amount": 100.00,
+  "status": "PENDING",
+  "currency": "usd",
+  "ts": "2025-07-25T08:45:30Z"
+}
 ```
