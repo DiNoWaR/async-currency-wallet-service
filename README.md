@@ -112,10 +112,6 @@ curl -X GET http://localhost:8081/transactions/balance/user1
     "amount": 10
    }
   ]
-  "balances": {
-    "usd": 150.00,
-    "try": 80.50
-  }
 }
 ```
 
